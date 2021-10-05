@@ -4,12 +4,10 @@ WORKDIR /usr/src/app
 COPY package.json package-lock.json ./
 RUN npm install
 COPY . .
-#RUN npm run build --prod
-EXPOSE 4200
-CMD npm run start
+RUN npm run build --prod
+
 LABEL  Created by Salim Khan
 
-
 #Stage 2: run the container in nginx web server.
-#FROM nginx:1.19.7-alpine
-#COPY --from=builder /usr/src/app/dist/angular-app/ /usr/share/nginx/html
+FROM nginx:1.19.7-alpine
+COPY --from=builder /usr/src/app/dist/angular-app/ /usr/share/nginx/html
