@@ -1,0 +1,59 @@
+pipeline { 
+    environment { 
+        registry = "salimkhan/pgdevopscapstoneproject" 
+        registryCredential = 'docker' 
+        dockerImage = '' 
+    }
+    agent any 
+    stages { 
+        stage('Checkout Git Project') { 
+            steps { 
+                
+                git branch: 'main',
+                url: 'https://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@github.com/SalimKhan/PGDevOpsCapstoneProject.git' 
+            }
+        } 
+        stage('Angular project build') { 
+            steps {
+                sh 'ng build --prod' 
+            }
+        }
+        stage('Building Image') { 
+            steps { 
+                script { 
+                    dockerImage = docker.build registry + ":$BUILD_NUMBER" 
+                }
+            } 
+        }
+        stage('Deploy Image') { 
+            steps { 
+                script { 
+                    docker.withRegistry( '', registryCredential ) { 
+                        dockerImage.push() 
+                    }
+                } 
+            }
+        } 
+        stage('Cleaning up Image') { 
+            steps { 
+                sh "docker rmi $registry:$BUILD_NUMBER" 
+            }
+        }
+        stage('Deploy from Registry') { 
+            steps { 
+                sh "docker pull $registry:$BUILD_NUMBER"
+                
+            }
+        }
+        stage('RUN Container') { 
+            steps { 
+                sh "docker run -d -p 80:80 $registry:$BUILD_NUMBER" 
+            }
+        }
+        stage('Smoke Test') { 
+            steps { 
+                sh "curl localhost:80" 
+            }
+        }
+    }
+}
